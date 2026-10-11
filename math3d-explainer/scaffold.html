@@ -1,0 +1,64 @@
+<h2 class="sr-only">ONE-SENTENCE SUMMARY OF THE VISUAL</h2>
+<div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+<button id="m1">1 · MODE ONE 模式一</button>
+<button id="m2">2 · MODE TWO 模式二</button>
+</div>
+<div id="wrap" style="position:relative;height:420px;touch-action:none;cursor:grab;background:var(--surface-1);border-radius:12px;overflow:hidden"></div>
+<div id="ctl" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin:12px 0 8px;font-size:14px"></div>
+<div id="ro" style="font-size:14px;line-height:1.7"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const wrap=document.getElementById('wrap'),ctl=document.getElementById('ctl'),ro=document.getElementById('ro');
+const W=wrap.clientWidth,H=420;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);
+wrap.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,W/H,0.1,60);camera.position.set(0,0,6);
+const group=new THREE.Group();group.rotation.set(0.4,-0.6,0);scene.add(group);
+const dyn=new THREE.Group();group.add(dyn);
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI;
+let labels=[],mode=1;
+function clear(){while(dyn.children.length)dyn.remove(dyn.children[0]);labels.forEach(l=>l.el.remove());labels=[];}
+function lbl(t,v,c){const el=document.createElement('div');el.textContent=t;el.style.cssText='position:absolute;font-size:13px;font-weight:500;pointer-events:none;white-space:nowrap;color:'+c;wrap.appendChild(el);labels.push({el,v:v.clone()});}
+function pt(v,c,r){const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),new THREE.MeshBasicMaterial({color:c}));m.position.copy(v);dyn.add(m);}
+function tube(ps,c,r){dyn.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps),160,r,8),new THREE.MeshBasicMaterial({color:c})));}
+function ln(ps,c,dash,ds){const g=new THREE.BufferGeometry().setFromPoints(ps);const m=dash?new THREE.LineDashedMaterial({color:c,dashSize:ds||0.1,gapSize:(ds||0.1)*0.7}):new THREE.LineBasicMaterial({color:c});const l=new THREE.Line(g,m);if(dash)l.computeLineDistances();dyn.add(l);}
+function arrow(o,d,len,c){dyn.add(new THREE.ArrowHelper(d.clone().normalize(),o,len,c,0.16,0.09));}
+function plane(n,c,R){const m=new THREE.Mesh(new THREE.CircleGeometry(R||1.6,48),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.14,side:THREE.DoubleSide,depthWrite:false}));m.quaternion.setFromUnitVectors(V(0,0,1),n.clone().normalize());dyn.add(m);}
+const sph=new THREE.Group();group.add(sph);
+sph.add(new THREE.Mesh(new THREE.SphereGeometry(1,40,28),new THREE.MeshBasicMaterial({color:0x888780,transparent:true,opacity:0.07,depthWrite:false})));
+sph.add(new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(1,16,12)),new THREE.LineBasicMaterial({color:0x888780,transparent:true,opacity:0.18})));
+function slider(id,label,min,max,val,step){return '<span style="color:var(--text-secondary)">'+label+'</span><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" value="'+val+'" step="'+step+'"><span id="v_'+id+'" style="font-weight:500;min-width:48px;text-align:right"></span>';}
+const g=id=>+document.getElementById(id).value;
+const sv=(id,t)=>document.getElementById('v_'+id).textContent=t;
+const card=(a,b,bg)=>'<div style="background:'+(bg||'var(--surface-2)')+';border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px"><div style="font-size:12px;color:var(--text-secondary)">'+a+'</div><div style="font-weight:500">'+b+'</div></div>';
+const grid=h=>'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:8px">'+h+'</div>';
+const OK='var(--bg-success)',BAD='var(--bg-danger)';
+
+function setMode(m){mode=m;
+ [1,2].forEach(i=>document.getElementById('m'+i).style.borderColor=i==m?'var(--border-accent)':'');
+ sph.visible=false;
+ ctl.innerHTML=m==1?slider('a','PARAM A',0,100,50,1):slider('b','PARAM B',0,100,50,1);
+ ctl.querySelectorAll('input').forEach(i=>i.oninput=update);update();}
+
+function update(){clear();
+ if(mode==1){
+  const a=g('a');sv('a',a);
+  pt(V(0,0,0),0x378ADD,0.08);lbl('o',V(0.1,0.2,0),'#378ADD');
+  ro.innerHTML=grid(card('QUANTITY THE THEOREM TALKS ABOUT',a.toFixed(1)))+'<div style="color:var(--text-secondary)">ONE LINE: what to look at.</div>';
+ } else {
+  const b=g('b');sv('b',b);
+  ro.innerHTML=grid(card('QUANTITY',b.toFixed(1),OK));
+ }}
+
+[1,2].forEach(i=>document.getElementById('m'+i).onclick=()=>setMode(i));
+let drag=null;
+wrap.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];wrap.setPointerCapture(e.pointerId);wrap.style.cursor='grabbing';});
+wrap.addEventListener('pointermove',e=>{if(!drag)return;group.rotation.y+=(e.clientX-drag[0])*0.01;group.rotation.x=Math.max(-1.5,Math.min(1.5,group.rotation.x+(e.clientY-drag[1])*0.01));drag=[e.clientX,e.clientY];});
+wrap.addEventListener('pointerup',()=>{drag=null;wrap.style.cursor='grab';});
+function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);
+ labels.forEach(l=>{const p=l.v.clone();group.localToWorld(p);p.project(camera);l.el.style.left=((p.x+1)/2*W+4)+'px';l.el.style.top=((1-p.y)/2*H-8)+'px';});}
+setMode(1);loop();
+</script>
