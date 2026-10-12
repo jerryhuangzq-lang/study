@@ -1,1 +1,2 @@
-Snapshot of https://github.com/morluto/REA at commit ae80513 (MIT). Submodules in third_party/ are not included.
+Snapshot of https://github.com/morluto/REA at commit ae80513 (MIT). Submodules in third_party/ are included at their pinned commits (own licenses apply): binwalk 4fdab3d, ghidra-nativeaot effeb73, jadx-headless-mcp 5844800, unblob 1fcc7a0, wakaru 8219bf5.
+LFS-tracked files (mostly unblob test fixtures, ~2500) were removed because LFS objects can't be fetched here.
