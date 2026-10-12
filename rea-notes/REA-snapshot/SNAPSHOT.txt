@@ -1,0 +1,1 @@
+Snapshot of https://github.com/morluto/REA at commit ae80513 (MIT). Submodules in third_party/ are not included.
